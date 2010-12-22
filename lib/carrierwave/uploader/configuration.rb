@@ -31,6 +31,7 @@ module CarrierWave
         add_config :enable_processing
         add_config :ensure_multipart_form
         add_config :delete_tmp_file_after_storage
+        add_config :connection
 
         # Mounting
         add_config :ignore_integrity_errors
@@ -46,7 +47,8 @@ module CarrierWave
             :s3 => "CarrierWave::Storage::S3",
             :grid_fs => "CarrierWave::Storage::GridFS",
             :right_s3 => "CarrierWave::Storage::RightS3",
-            :cloud_files => "CarrierWave::Storage::CloudFiles"
+            :cloud_files => "CarrierWave::Storage::CloudFiles",
+            :dropbox => "CarrierWave::Storage::DropBox"
           }
           config.storage = :file
           config.s3_headers = {}
