@@ -31,7 +31,10 @@ module CarrierWave
         add_config :enable_processing
         add_config :ensure_multipart_form
         add_config :delete_tmp_file_after_storage
-        add_config :connection
+        add_config :dropbox_user
+        add_config :dropbox_password
+        add_config :dropbox_access_key
+        add_config :dropbox_secret_key
 
         # Mounting
         add_config :ignore_integrity_errors

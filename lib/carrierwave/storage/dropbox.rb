@@ -68,7 +68,7 @@ module CarrierWave
         #
 
         def url
-            session.url(@path)
+            connection.link(@path)
         end
 
         def store(file)
@@ -125,12 +125,10 @@ module CarrierWave
       end
 
       def connection
-        @connection ||= uploader.connection
+        @connection ||= Dropbox::Session.new(uploader.dropbox_access_key, uploader.dropbox_secret_key, {:authorizing_user => uploader.dropbox_user, :authorizing_password => uploader.dropbox_password})
         @connection.mode = :dropbox
         unless @connection.authorized? 
-          puts @connection.authorize_url
-          gets
-          @connection.authorize
+          @connection.authorize!
           @connection
         else
           @connection
