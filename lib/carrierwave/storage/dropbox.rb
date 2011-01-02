@@ -72,7 +72,7 @@ module CarrierWave
         end
 
         def store(file)
-          connection.upload(::File.open(file.file),path)
+          connection.upload(::File.open(file.file),File.dirname(path)
         end
 
 
@@ -84,6 +84,19 @@ module CarrierWave
         def metadata 
           @metadata ||=  connection.metadata(@path)
         end
+      # Do something to retrieve the file
+      #
+      # @param [String] identifier uniquely identifies the file
+      #
+      # [identifier (String)] uniquely identifies the file
+      #
+      # === Returns
+      #
+      # [CarrierWave::Storage::DropBox::File] the stored file
+      #
+      def retrieve!(identifier)
+        CarrierWave::Storage::DropBox::File.new(uploader, self, uploader.store_path(identifier))
+      end
 
       private
 
@@ -110,19 +123,6 @@ module CarrierWave
         f
       end
 
-      # Do something to retrieve the file
-      #
-      # @param [String] identifier uniquely identifies the file
-      #
-      # [identifier (String)] uniquely identifies the file
-      #
-      # === Returns
-      #
-      # [CarrierWave::Storage::DropBox::File] the stored file
-      #
-      def retrieve!(identifier)
-        CarrierWave::Storage::DropBox::File.new(uploader, self, uploader.store_path(identifier))
-      end
 
       def connection
         @connection ||= Dropbox::Session.new(uploader.dropbox_access_key, uploader.dropbox_secret_key, {:authorizing_user => uploader.dropbox_user, :authorizing_password => uploader.dropbox_password})
