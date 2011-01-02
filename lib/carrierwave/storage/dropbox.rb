@@ -72,7 +72,7 @@ module CarrierWave
         end
 
         def store(file)
-          connection.upload(::File.open(file.file),File.dirname(path)
+          connection.upload(::File.open(file.file),File.dirname(path))
         end
 
 
