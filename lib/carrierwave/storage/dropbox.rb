@@ -84,19 +84,6 @@ module CarrierWave
         def metadata 
           @metadata ||=  connection.metadata(@path)
         end
-      # Do something to retrieve the file
-      #
-      # @param [String] identifier uniquely identifies the file
-      #
-      # [identifier (String)] uniquely identifies the file
-      #
-      # === Returns
-      #
-      # [CarrierWave::Storage::DropBox::File] the stored file
-      #
-      def retrieve!(identifier)
-        CarrierWave::Storage::DropBox::File.new(uploader, self, uploader.store_path(identifier))
-      end
 
       private
 
@@ -121,6 +108,19 @@ module CarrierWave
         f = CarrierWave::Storage::DropBox::File.new(uploader, self, uploader.store_path)
         f.store(file)
         f
+      end
+      # Do something to retrieve the file
+      #
+      # @param [String] identifier uniquely identifies the file
+      #
+      # [identifier (String)] uniquely identifies the file
+      #
+      # === Returns
+      #
+      # [CarrierWave::Storage::DropBox::File] the stored file
+      #
+      def retrieve!(identifier)
+        CarrierWave::Storage::DropBox::File.new(uploader, self, uploader.store_path(identifier))
       end
 
 
