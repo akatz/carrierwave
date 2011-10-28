@@ -1,7 +1,7 @@
 # encoding: utf-8
 
-require "rubygems"
-require "bundler/setup"
+require 'rubygems'
+require 'bundler/setup'
 
 require 'tempfile'
 require 'time'
@@ -9,6 +9,25 @@ require 'logger'
 
 require 'carrierwave'
 require 'timecop'
+require 'open-uri'
+require 'sham_rack'
+
+unless defined?(JRUBY_VERSION)
+  # not sure why we need to do this
+  require 'sqlite3/sqlite3_native'
+  require 'sqlite3'
+end
+
+require 'fog'
+require 'storage/fog_helper'
+
+unless ENV['REMOTE'] == 'true'
+  Fog.mock!
+end
+
+require 'fog_credentials' # after Fog.mock!
+
+CARRIERWAVE_DIRECTORY = "carrierwave#{Time.now.to_i}" unless defined?(CARRIERWAVE_DIRECTORY)
 
 alias :running :lambda
 
@@ -64,9 +83,9 @@ module CarrierWave
         else
           t = StringIO.new
         end
-        t.stub!(:local_path).and_return("")
-        t.stub!(:original_filename).and_return(filename || fake_name)
-        t.stub!(:content_type).and_return(mime_type)
+        t.stub!(:local_path => "",
+                :original_filename => filename || fake_name,
+                :content_type => mime_type)
         return t
       end
 
@@ -92,7 +111,7 @@ module CarrierWave
   end
 end
 
-Spec::Runner.configure do |config|
+RSpec.configure do |config|
   config.include CarrierWave::Test::Matchers
   config.include CarrierWave::Test::MockFiles
   config.include CarrierWave::Test::MockStorage

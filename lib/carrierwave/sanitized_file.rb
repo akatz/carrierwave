@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 require 'pathname'
+require 'active_support/core_ext/string/multibyte'
 
 module CarrierWave
 
@@ -15,6 +16,14 @@ module CarrierWave
   class SanitizedFile
 
     attr_accessor :file
+
+    class << self
+      attr_writer :sanitize_regexp
+
+      def sanitize_regexp
+        @sanitize_regexp ||= /[^a-zA-Z0-9\.\-\+_]/
+      end
+    end
 
     def initialize(file)
       self.file = file
@@ -126,8 +135,6 @@ module CarrierWave
       @file.nil? || self.size.nil? || self.size.zero?
     end
 
-    alias_method :blank?, :empty?
-
     ##
     # === Returns
     #
@@ -147,7 +154,7 @@ module CarrierWave
     #
     def read
       if is_path?
-        File.open(@file, "rb").read
+        File.open(@file, "rb") {|file| file.read}
       else
         @file.rewind if @file.respond_to?(:rewind)
         @file.read
@@ -210,6 +217,18 @@ module CarrierWave
     end
 
     ##
+    # Returns a File object, or nil if it does not exist.
+    #
+    # === Returns
+    #
+    # [File] a File object representing the SanitizedFile
+    #
+    def to_file
+      return @file if @file.is_a?(File)
+      File.open(path) if exists?
+    end
+
+    ##
     # Returns the content type of the file.
     #
     # === Returns
@@ -219,6 +238,28 @@ module CarrierWave
     def content_type
       return @content_type if @content_type
       @file.content_type.chomp if @file.respond_to?(:content_type) and @file.content_type
+    end
+
+    ##
+    # Sets the content type of the file.
+    #
+    # === Returns
+    #
+    # [String] the content type of the file
+    #
+    def content_type=(type)
+      @content_type = type
+    end
+
+    ##
+    # Used to sanitize the file name. Public to allow overriding for non-latin characters.
+    #
+    # === Returns
+    #
+    # [Regexp] the regexp for sanitizing the file name
+    #
+    def sanitize_regexp
+      CarrierWave::SanitizedFile.sanitize_regexp
     end
 
   private
@@ -248,10 +289,10 @@ module CarrierWave
     def sanitize(name)
       name = name.gsub("\\", "/") # work-around for IE
       name = File.basename(name)
-      name = name.gsub(/[^a-zA-Z0-9\.\-\+_]/,"_")
+      name = name.gsub(sanitize_regexp,"_")
       name = "_#{name}" if name =~ /\A\.+\z/
       name = "unnamed" if name.size == 0
-      return name.downcase
+      return name.mb_chars.to_s
     end
 
     def split_extension(filename)

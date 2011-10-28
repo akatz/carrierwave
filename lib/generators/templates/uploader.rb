@@ -2,13 +2,13 @@
 
 class <%= class_name %>Uploader < CarrierWave::Uploader::Base
 
-  # Include RMagick or ImageScience support:
+  # Include RMagick or MiniMagick support:
   # include CarrierWave::RMagick
-  # include CarrierWave::ImageScience
+  # include CarrierWave::MiniMagick
 
   # Choose what kind of storage to use for this uploader:
   storage :file
-  # storage :s3
+  # storage :fog
 
   # Override the directory where uploaded files will be stored.
   # This is a sensible default for uploaders that are meant to be mounted:
@@ -40,6 +40,7 @@ class <%= class_name %>Uploader < CarrierWave::Uploader::Base
   # end
 
   # Override the filename of the uploaded files:
+  # Avoid using model.id or version_name here, see uploader/store.rb for details.
   # def filename
   #   "something.jpg" if original_filename
   # end

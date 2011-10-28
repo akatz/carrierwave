@@ -11,11 +11,15 @@ module CarrierWave
 
       ##
       # Override this method in your uploader to provide a white list of extensions which
-      # are allowed to be uploaded.
+      # are allowed to be uploaded. Compares the file's extension case insensitive.
+      # Furthermore, not only strings but Regexp are allowed as well.
+      #
+      # When using a Regexp in the white list, `\A` and `\z` are automatically added to
+      # the Regexp expression, also case insensitive.
       #
       # === Returns
       #
-      # [NilClass, Array[String]] a white list of extensions which are allowed to be uploaded
+      # [NilClass, Array[String,Regexp]] a white list of extensions which are allowed to be uploaded
       #
       # === Examples
       #
@@ -23,13 +27,20 @@ module CarrierWave
       #       %w(jpg jpeg gif png)
       #     end
       #
+      # Basically the same, but using a Regexp:
+      #
+      #     def extension_white_list
+      #       [/jpe?g/, 'gif', 'png']
+      #     end
+      #
       def extension_white_list; end
 
     private
 
       def check_whitelist!(new_file)
-        if extension_white_list and not extension_white_list.include?(new_file.extension.to_s)
-          raise CarrierWave::IntegrityError, "You are not allowed to upload #{new_file.extension.inspect} files, allowed types: #{extension_white_list.inspect}"
+        extension = new_file.extension.to_s
+        if extension_white_list and not extension_white_list.detect { |item| extension =~ /\A#{item}\z/i }
+          raise CarrierWave::IntegrityError, I18n.translate(:"errors.messages.extension_white_list_error", :extension => new_file.extension.inspect, :allowed_types => extension_white_list.inspect)
         end
       end
 

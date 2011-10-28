@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 require 'spec_helper'
+require 'active_support/json'
 
 describe CarrierWave::Uploader do
 
@@ -50,6 +51,15 @@ describe CarrierWave::Uploader do
       @uploader.url(:thumb, :mini).should == '/uploads/tmp/20071201-1234-345-2255/thumb_mini_test.jpg'
     end
 
+    it "should prepend the config option 'base_path', if set" do
+      @uploader_class.version(:thumb)
+      @uploader.class.configure do |config|
+        config.base_path = "/base_path"
+      end
+      @uploader.cache!(File.open(file_path('test.jpg')))
+      @uploader.url(:thumb).should == '/base_path/uploads/tmp/20071201-1234-345-2255/thumb_test.jpg'
+    end
+
     it "should return file#url if available" do
       @uploader.cache!(File.open(file_path('test.jpg')))
       @uploader.file.stub!(:url).and_return('http://www.example.com/someurl.jpg')
@@ -75,6 +85,12 @@ describe CarrierWave::Uploader do
     it "should return a hash including a cached URL" do
       @uploader.cache!(File.open(file_path('test.jpg')))
       JSON.parse(@uploader.to_json)['url'].should == '/uploads/tmp/20071201-1234-345-2255/test.jpg'
+    end
+
+    it "should return a hash including a cached URL of a version" do
+      @uploader_class.version :thumb
+      @uploader.cache!(File.open(file_path('test.jpg')))
+      JSON.parse(@uploader.to_json)['thumb']['url'].should == '/uploads/tmp/20071201-1234-345-2255/thumb_test.jpg'
     end
   end
 

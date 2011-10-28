@@ -1,3 +1,84 @@
+=== Version 0.5.7 2011-08-12
+
+* [BREAKING CHANGE] Extracted Mongoid support into a separate gem (carrierwave-mongoid) [jnicklas]
+* [BREAKING CHANGE] Remove ImageScience support due to lack maintenance and 1.9.2 compatibility [jnicklas]
+* [BREAKING CHANGE] Combine delete_tmp_file_after_storage and delete_cache_id_after_storage options [bensie]
+* [changed] Cached and then remote-uploaded file will no longer have a content_type, please use CarrierWave::MimeTypes processor instead [trevorturk]
+* [changed] Allow writing over a previously assigned file when retrieving a remote file [Florent2]
+* [fixed] Fixed exception when nested or double-embedded Mongoid documents are saved [potatosalad]
+* [fixed] Fixed that store! can call process! twice [gzigzigzeo]
+* [fixed] Performance enhancements by reducing use of rescue [jamescook]
+
+=== Version 0.5.6 2011-07-12
+
+* [fixed] Remove cache file and directories after storing [scottwb]
+* [fixed] Add missing active_support/deprecation require [trevorturk]
+* [fixed] Remove redundant requires of sequel and datamapper [solnic]
+* [fixed] Running tests with REMOTE=true [geemus]
+
+=== Version 0.5.5 2011-07-09
+
+* [BREAKING CHANGE] Extracted DataMapper support into a separate gem (carrierwave-datamapper) [jnicklas]
+* [BREAKING CHANGE] Extracted Sequel support into a separate gem (carrierwave-sequel) [jnicklas]
+* [changed] Don't downcase filenames by default [bensie]
+* [changed] Orm mount modules default uploader to nil [jnicklas]
+* [changed] Remove alias_method :blank? from SanitizedFile to for performance re: issue #298 [trevorturk]
+* [added] Conditional processing of versions [gucki]
+* [added] Remove Remove previously stored files after Active Record mounted uploader update re: issue #75 [trevorturk]
+* [added] Remove Remove previously stored files after Mongoid mounted uploader update re: issue #75 [did]
+* [added] Added _identifier to retrieve identifier/filename [jnicklas]
+* [added] clean_cached_files! clears all files older than 24 hours by default, but time frame can now be customized [cover]
+* [added] Versions now implement an enable_processing method which uses the parent when no value is set [mariovisic]
+* [added] Delete cache_id garbage dirs, closes GH issue #338 [clyfe]
+* [added] Added CarrierWave::MimeTypes processor for more advanced content-type guessing [JangoSteve]
+* [fixed] Active Record's will_change! method works when mount_on option is used [indrekj]
+* [fixed] Fixed problem with accepting URL uploads when the URL was already escaped [cover]
+* [fixed] Fixed ability to override sanitize_regexp [trevorturk]
+* [fixed] Fix that cached and then remote-uploaded file should have content_type [trevorturk]
+* [fixed] Fix validates_size/length_of in Rails 3.0.6 and above, closes #342 [bensie]
+* [fixed] Various Active Support compatibility updates [slbug, bensie, et al]
+
+=== Version 0.5.4 2011-05-18
+
+* [changed] Fog: Performance enhancements for AWS and Google [geemus]
+* [changed] Fog: Try to use subdomain public url on s3 [geemus]
+* [changed] Memoize CarrierWave::Mounter#option for increased performance [ingemar]
+* [changed] Relax development gem dependency versions where possible and fix tests [trevorturk]
+* [changed] Upgrade to RSpec 2 [jnicklas]
+
+=== Version 0.5.3 2011-03-22
+
+* [changed] Cloud Files storage so delete and url return nil if object not found instead of exception [minter]
+* [added] New fog storage provider that supports Amazon S3, Rackspace Cloud Files, and Google Storare for Developers [geemus]
+* [added] cloud_files_auth_url and cloud_files_snet config options for Cloud Files [minter]
+* [added] process_uri method that can be overridden in your uploader to support downloads from non-standard urls [trevorturk]
+* [added] version urls to json output [karb]
+* [added] Active Record marks uploader column as changed when changed [josevalim]
+* [fixed] Cloud Files storage tests to use the new url format [minter]
+* [fixed] Moved raising of FormNotMultipart farther down to avoid errors with nested attribute forms [trevorturk]
+* [fixed] original_filename of remote uploads should be calculated from final (possibly redirected) URL [brady8]
+* [fixed] Fix calling :process! on files stored in remote solutions [alexcrichton]
+* [fixed] Fix paperclip compatibility mappings [valakirka]
+* [fixed] Ensure temporary files can be deleted on Windows [Eleo]
+
+=== Version 0.5.2 2011-02-18
+
+* [changed] Require active_support/core_ext/string/multibyte to fix downcasing unicode filenames during sanitizing [nashbridges]
+* [changed] Use fog ~> 0.4, Fog::AWS::Storage.new -> Fog::Storage.new(:provider => 'AWS') [trevorturk]
+* [changed] Use class_attribute (inheritable attributes are deprecated) [stephencelis]
+* [changed] extension_white_list no longer supports a single string, only an array of strings and/or Regexps [trevorturk]
+* [changed] Rackspace Cloud Files: only create container if container does not exist [edmundsalvacion]
+* [changed] GridFS: the path returned is no longer always nil, it is now the path in GridFS [alexcrichton]
+* [added] Ability to specify a Regexp in the extension_white_list [lwe]
+* [added] CarrierWave::SanitizedFile#sanitize_regexp public method to allow customizing [trevorturk]
+* [added] sanitize_regexp documentation to the README [nashbridges]
+* [added] Ability to use https for Amazon S3 URLs if config.s3_use_ssl is true [recruitmilitary]
+* [added] The s3_region configuration documentation to the README [mrsimo]
+* [fixed] Reprocessing remotely stored files [alexcrichton]
+* [fixed] Nested versioning processing [alexcrichton]
+* [fixed] An intermittent bug with ImageScience resize_to_fill method [LupineDev]
+* [fixed] DataMapper#save should remove the avatar if remove_avatar? returns true [wprater]
+
 === Version 0.5.1 2010-12-01
 
 * [changed] s3_access renamed to s3_access_policy [Jonas Nicklas]
@@ -161,7 +242,7 @@ most bugs should be fixed.
 
 * [changed] The version is no longer stored in the store dir. This will break the paths for files uploaded with 0.1
 * [changed] CarrierWave::Uploader is now a module, not a class, so you need to include it, not inherit from it.
-* [added] Integiry checking in uploaders via a white list of extensions
+* [added] integrity checking in uploaders via a white list of extensions
 * [added] Validations for integrity and processing in ActiveRecord, activated by default
 * [added] Support for nested versions
 * [added] Permissions option to set the permissions of the uploaded files

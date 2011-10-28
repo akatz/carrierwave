@@ -7,7 +7,7 @@ module CarrierWave
       "You tried to assign a String or a Pathname to an uploader, for security reasons, this is not allowed.\n\n If this is a file upload, please check that your upload form is multipart encoded."
     end
   end
-  
+
   ##
   # Generates a unique cache id for use in the caching system
   #
@@ -37,15 +37,15 @@ module CarrierWave
         #   CarrierWave.clean_cached_files!
         #
         # === Note
-        # 
+        #
         # This only works as long as you haven't done anything funky with your cache_dir.
         # It's recommended that you keep cache files in one place only.
         #
-        def clean_cached_files!
+        def clean_cached_files!(seconds=60*60*24)
           Dir.glob(File.expand_path(File.join(cache_dir, '*'), CarrierWave.root)).each do |dir|
             time = dir.scan(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/).first.map { |t| t.to_i }
             time = Time.utc(*time)
-            if time < (Time.now.utc - (60*60*24))
+            if time < (Time.now.utc - seconds)
               FileUtils.rm_rf(dir)
             end
           end
@@ -61,6 +61,19 @@ module CarrierWave
       #
       def cached?
         @cache_id
+      end
+
+      ##
+      # Caches the remotely stored file
+      #
+      # This is useful when about to process images. Most processing solutions
+      # require the file to be stored on the local filesystem.
+      #
+      def cache_stored_file!
+        sanitized = SanitizedFile.new :tempfile => StringIO.new(file.read),
+          :filename => File.basename(path), :content_type => file.content_type
+
+        cache! sanitized
       end
 
       ##
@@ -87,9 +100,10 @@ module CarrierWave
       #
       def cache!(new_file)
         new_file = CarrierWave::SanitizedFile.new(new_file)
-        raise CarrierWave::FormNotMultipart if new_file.is_path? && ensure_multipart_form
 
         unless new_file.empty?
+          raise CarrierWave::FormNotMultipart if new_file.is_path? && ensure_multipart_form
+
           with_callbacks(:cache, new_file) do
             self.cache_id = CarrierWave.generate_cache_id unless cache_id
 
@@ -137,7 +151,7 @@ module CarrierWave
       end
 
       def original_filename=(filename)
-        raise CarrierWave::InvalidParameter, "invalid filename" unless filename =~ /\A[a-z0-9\.\-\+_]+\z/i
+        raise CarrierWave::InvalidParameter, "invalid filename" if filename =~ CarrierWave::SanitizedFile.sanitize_regexp
         @original_filename = filename
       end
 
