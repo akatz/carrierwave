@@ -4,13 +4,7 @@ require 'fileutils'
 require 'active_support/core_ext/object/blank'
 require 'active_support/core_ext/class/attribute'
 
-begin
-  require 'active_support/core_ext/class/inheritable_attributes'
-rescue LoadError
-end
-
 require 'active_support/concern'
-require 'active_support/memoizable'
 
 module CarrierWave
 
@@ -44,10 +38,6 @@ module CarrierWave
     autoload :Abstract, 'carrierwave/storage/abstract'
     autoload :File, 'carrierwave/storage/file'
     autoload :Fog, 'carrierwave/storage/fog'
-    autoload :S3, 'carrierwave/storage/s3'
-    autoload :GridFS, 'carrierwave/storage/grid_fs'
-    autoload :RightS3, 'carrierwave/storage/right_s3'
-    autoload :CloudFiles, 'carrierwave/storage/cloud_files'
     autoload :DropBox, 'carrierwave/storage/dropbox'
   end
 
@@ -66,6 +56,7 @@ module CarrierWave
     autoload :Url, 'carrierwave/uploader/url'
     autoload :Mountable, 'carrierwave/uploader/mountable'
     autoload :Configuration, 'carrierwave/uploader/configuration'
+    autoload :Serialization, 'carrierwave/uploader/serialization'
   end
 
   module Compatibility
@@ -105,13 +96,17 @@ elsif defined?(Rails)
   end
 
 elsif defined?(Sinatra)
-
-  CarrierWave.root = if Sinatra::Application.respond_to?(:public_folder)
-    # Sinatra >= 1.3
-    Sinatra::Application.public_folder
+  if defined?(Padrino)
+    CarrierWave.root = File.join(PADRINO_ROOT, "public")
   else
-    # Sinatra < 1.3
-    Sinatra::Application.public
+
+    CarrierWave.root = if Sinatra::Application.respond_to?(:public_folder)
+      # Sinatra >= 1.3
+      Sinatra::Application.public_folder
+    else
+      # Sinatra < 1.3
+      Sinatra::Application.public
+    end
   end
 
 end

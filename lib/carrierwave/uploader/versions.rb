@@ -1,7 +1,5 @@
 # encoding: utf-8
 
-require 'active_support/deprecation'
-
 module CarrierWave
   module Uploader
     module Versions
@@ -10,18 +8,7 @@ module CarrierWave
       include CarrierWave::Uploader::Callbacks
 
       included do
-        ##
-        # Add configuration options for versions
-        # class_inheritable_accessor was deprecated in Rails 3.1 and removed for 3.2.
-        # class_attribute was added in 3.0, but doesn't support omitting the instance_reader until 3.0.10
-        # For max compatibility, always use class_inheritable_accessor when possible
-        if respond_to?(:class_inheritable_accessor)
-          ActiveSupport::Deprecation.silence do
-            class_inheritable_accessor :versions, :version_names, :instance_reader => false, :instance_writer => false
-          end
-        else
-          class_attribute :versions, :version_names, :instance_reader => false, :instance_writer => false
-        end
+        class_attribute :versions, :version_names, :instance_reader => false, :instance_writer => false
 
         self.versions = {}
         self.version_names = []
@@ -140,28 +127,36 @@ module CarrierWave
       ##
       # When given a version name as a parameter, will return the url for that version
       # This also works with nested versions.
+      # When given a query hash as a parameter, will return the url with signature that contains query params
+      # Query hash only works with AWS (S3 storage).
       #
       # === Example
       #
       #     my_uploader.url                 # => /path/to/my/uploader.gif
       #     my_uploader.url(:thumb)         # => /path/to/my/thumb_uploader.gif
       #     my_uploader.url(:thumb, :small) # => /path/to/my/thumb_small_uploader.gif
+      #     my_uploader.url(:query => {"response-content-disposition" => "attachment"})
+      #     my_uploader.url(:version, :sub_version, :query => {"response-content-disposition" => "attachment"})
       #
       # === Parameters
       #
       # [*args (Symbol)] any number of versions
+      # OR/AND
+      # [Hash] query params
       #
       # === Returns
       #
       # [String] the location where this file is accessible via a url
       #
       def url(*args)
-        if(args.first)
-          raise ArgumentError, "Version #{args.first} doesn't exist!" if versions[args.first.to_sym].nil?
+        if (version = args.first) && version.respond_to?(:to_sym)
+          raise ArgumentError, "Version #{version} doesn't exist!" if versions[version.to_sym].nil?
           # recursively proxy to version
-          versions[args.first.to_sym].url(*args[1..-1])
+          versions[version.to_sym].url(*args[1..-1])
+        elsif args.first
+          super(args.first)
         else
-          super()
+          super
         end
       end
 
@@ -191,7 +186,15 @@ module CarrierWave
       def active_versions
         versions.select do |name, uploader|
           condition = self.class.versions[name][:options][:if]
-          not condition or send(condition, file)
+          if(condition)
+            if(condition.respond_to?(:call))
+              condition.call(self, :version => name, :file => file)
+            else
+              send(condition, file)
+            end
+          else
+            true
+          end
         end
       end
 
@@ -211,8 +214,22 @@ module CarrierWave
           :filename => new_file.original_filename
 
         active_versions.each do |name, v|
+          next if v.cached?
+
+          # If option :from_version is present, create cache using cached file from
+          # version indicated
+          if self.class.versions[name][:options] && self.class.versions[name][:options][:from_version]
+            # Maybe the reference version has not been cached yet
+            unless versions[self.class.versions[name][:options][:from_version]].cached?
+              versions[self.class.versions[name][:options][:from_version]].cache!(processed_parent)
+            end
+            processed_version = SanitizedFile.new :tempfile => versions[self.class.versions[name][:options][:from_version]],
+              :filename => new_file.original_filename
+            v.cache!(processed_version)
+          else
+            v.cache!(processed_parent)
+          end
           v.send(:cache_id=, cache_id)
-          v.cache!(processed_parent)
         end
       end
 

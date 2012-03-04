@@ -36,6 +36,20 @@ module CarrierWave
           send(:"\#{column}_will_change!")
           super
         end
+
+        def remote_#{column}_url=(url)
+          column = _mounter(:#{column}).serialization_column
+          send(:"\#{column}_will_change!")
+          super
+        end
+
+        def serializable_hash(options=nil)
+          hash = {}
+          self.class.uploaders.each do |column, uploader|
+            hash[column.to_s] = _mounter(:#{column}).uploader.serializable_hash
+          end
+          super(options).merge(hash)
+        end
       RUBY
 
     end

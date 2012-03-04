@@ -4,10 +4,12 @@ require 'spec_helper'
 
 require 'carrierwave/orm/activerecord'
 
-# change this if sqlite is unavailable
+# Change this if MySQL is unavailable
 dbconfig = {
-  :adapter => 'sqlite3',
-  :database => ':memory:'
+  :adapter  => 'mysql2',
+  :database => 'carrierwave_test',
+  :username => 'root',
+  :encoding => 'utf8'
 }
 
 ActiveRecord::Base.establish_connection(dbconfig)
@@ -60,53 +62,63 @@ describe CarrierWave::ActiveRecord do
 
       it "should return blank uploader when an empty string has been assigned" do
         @event[:image] = ''
-        @event.save
+        @event.save!
         @event.reload
         @event.image.should be_blank
       end
 
       it "should retrieve a file from the storage if a value is stored in the database" do
         @event[:image] = 'test.jpeg'
-        @event.save
+        @event.save!
         @event.reload
         @event.image.should be_an_instance_of(@uploader)
       end
 
       it "should set the path to the store dir" do
         @event[:image] = 'test.jpeg'
-        @event.save
+        @event.save!
         @event.reload
         @event.image.current_path.should == public_path('uploads/test.jpeg')
       end
 
       it "should return valid JSON when to_json is called when image is nil" do
         @event[:image].should be_nil
-
-        JSON.parse(@event.to_json)["event#{$arclass}"]["image"].should == {"url"=>nil}
+        hash = JSON.parse(@event.to_json)["event#{$arclass}"]
+        hash.keys.should include("image")
+        hash["image"].keys.should include("url")
+        hash["image"]["url"].should be_nil
       end
 
       it "should return valid JSON when to_json is called when image is present" do
         @event[:image] = 'test.jpeg'
-        @event.save
+        @event.save!
         @event.reload
 
-        JSON.parse(@event.to_json)["event#{$arclass}"]["image"].should == {"url"=>"/uploads/test.jpeg"}
+        JSON.parse(@event.to_json)["event#{$arclass}"]["image"].should == {"url" => "/uploads/test.jpeg"}
       end
 
-      # FIXME to_xml should work like to_json
+      it "should return valid JSON when to_json is called on a collection containing uploader from a model" do
+        @event[:image] = 'test.jpeg'
+        @event.save!
+        @event.reload
+
+        JSON.parse({:data => @event.image}.to_json).should == {"data"=>{"image"=>{"url"=>"/uploads/test.jpeg"}}}
+      end
+
       it "should return valid XML when to_xml is called when image is nil" do
         @event[:image].should be_nil
-
-        Hash.from_xml(@event.to_xml)["event#{$arclass}"].except("id").should == {"textfile"=>nil, "foo"=>nil}
+        hash = Hash.from_xml(@event.to_xml)["event#{$arclass}"]
+        hash.keys.should include("image")
+        hash["image"].keys.should include("url")
+        hash["image"]["url"].should be_nil
       end
 
-      # FIXME to_xml should work like to_json
       it "should return valid XML when to_xml is called when image is present" do
         @event[:image] = 'test.jpeg'
-        @event.save
+        @event.save!
         @event.reload
 
-        Hash.from_xml(@event.to_xml)["event#{$arclass}"]["image"].should == "test.jpeg"
+        Hash.from_xml(@event.to_xml)["event#{$arclass}"]["image"].should == {"url" => "/uploads/test.jpeg"}
       end
     end
 
@@ -287,6 +299,19 @@ describe CarrierWave::ActiveRecord do
         @event.image = stub_file("test.jpg")
         @event.image_changed?.should be_true
         @event.changed_for_autosave?.should be_true
+      end
+    end
+
+    describe "dirty tracking with remote_image_url" do
+
+      # FIXME ideally image_changed? and remote_image_url_changed? would return true
+      it "should mark image as changed when setting remote_image_url" do
+        @event.image_changed?.should be_false
+        @event.remote_image_url = 'http://www.example.com/test.jpg'
+        @event.image_changed?.should be_true
+        @event.save
+        @event.reload
+        @event.image_changed?.should be_false
       end
 
     end
