@@ -59,7 +59,6 @@ module CarrierWave
         add_config :validate_processing
         add_config :mount_on
 
-<<<<<<< HEAD
         configure do |config|
           config.permissions = 0644
           config.storage_engines = {
@@ -88,10 +87,8 @@ module CarrierWave
           config.enable_processing = true
           config.ensure_multipart_form = true
         end
-=======
         # set default values
         reset_config
->>>>>>> master
       end
 
       module ClassMethods
